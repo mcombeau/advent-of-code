@@ -1,11 +1,8 @@
-import re
 import argparse
 import typing
-from enum import Enum
 
 Args = argparse.Namespace
 Parser = argparse.ArgumentParser
-Pattern = re.Pattern[str]
 Any = typing.Any
 
 def parse_args() -> Args:
@@ -14,8 +11,6 @@ def parse_args() -> Args:
     args: Args = parser.parse_args()
     return args
 
-def get_game_id(line: str) -> int:
-    return int(line.split(":")[0].split(' ')[-1])
 
 def get_sub_games(line: str) -> list[str]:
     return line.strip().split(':')[-1].split(";")
@@ -36,21 +31,22 @@ def get_game_rgb(s: str) -> dict[str, int]:
 
 
 # ----------  PART I
+def get_game_id(line: str) -> int:
+    return int(line.split(":")[0].split(' ')[-1])
 
 def evaluate_game_session(max_cubes: dict[str, int], line: str) -> int:
     game_id: int = get_game_id(line)
     sub_games: list[str] = get_sub_games(line)
     for game in sub_games:
-        rgb: dict[str, int] = get_game_rgb(game)
-        if (rgb['red'] > max_cubes['red']
-                or rgb['green'] > max_cubes['green']
-                or rgb['blue'] > max_cubes['blue']):
+        game_cubes: dict[str, int] = get_game_rgb(game)
+        if (game_cubes['red'] > max_cubes['red']
+                or game_cubes['green'] > max_cubes['green']
+                or game_cubes['blue'] > max_cubes['blue']):
             raise Exception("invalid game")
     return game_id
 
 
 def calculate_result_part_1(lines: list[str]) -> int :
-    print("----- PART I")
     max_cubes: dict[str, int] = {'red':12, 'green':13, 'blue':14}
     print(f"Max number of cubes: red = {max_cubes['red']}, green = {max_cubes['green']}, blue = {max_cubes['blue']}")
     valid_games: list[int] = []
@@ -79,7 +75,6 @@ def get_min_cubes_for_game(line: str) -> dict[str, int]:
     return min_cubes
 
 def calculate_result_part_2(lines: list[str]) -> int:
-    print("----- PART II")
     power_cubes: list[int] = []
     for line in lines:
         min_cubes: dict[str, int] = get_min_cubes_for_game(line)
@@ -94,10 +89,13 @@ def main() -> None:
     args: Args = parse_args()
     with open(args.filename) as file:
         lines : list[str] = file.readlines();
+    print("----- PART I")
     result: int = calculate_result_part_1(lines)
-    print(f"Result: {result}\n")
+    print(f"Result: {result}")
+    print()
+    print("----- PART II")
     result: int = calculate_result_part_2(lines)
-    print(f"Result: {result}\n")
+    print(f"Result: {result}")
     exit(0)
 
 if __name__ == "__main__":
