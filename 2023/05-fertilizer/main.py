@@ -59,26 +59,49 @@ def get_lowest_seed_location(lines: list[str], seeds: list[int]) -> int:
         locations.append(num)
     return min(loc for loc in locations)
 
+
+#        PART ONE
+
 def calculate_result_part_one(lines: list[str]) -> int :
     seeds: list[int] = get_seed_numbers(lines)
     return get_lowest_seed_location(lines, seeds)
 
-# TODO: FIX THIS IT KILLS MY COMPUTER :(
+
+#        PART TWO
+
 def process_seed_chunk(min_range, max_range, lines: list[str]) -> int:
+    locations: list[int] = []
     seeds: list[int] = []
-    [seeds.append(s) for s in range(min_range, max_range)]
-    print(f"made seed list: {seeds}")
-    return get_lowest_seed_location(lines, seeds)
+    i: int = min_range
+    while i <= max_range:
+        if i == max_range or i == min_range + 2000:
+            lowest:int = get_lowest_seed_location(lines, seeds)
+            locations.append(lowest)
+            seeds: list[int] = []
+            min_range = i
+        if len(locations) == 500:
+            lowest: int = min(loc for loc in locations)
+            locations = []
+            locations.append(lowest)
+            print(f"Lowest of 500 locations: {locations}")
+        seeds.append(i)
+        i += 1
+    return min(loc for loc in locations)
+
 
 def calculate_result_part_two(lines: list[str]) -> int:
+    locations: list[int] = []
     seed_numbers: list[int] = get_seed_numbers(lines)
     for i, seed in enumerate(seed_numbers):
         min_range: int = seed
         max_range: int = min_range + seed_numbers[i + 1]
-        lowest_loc: int = process_seed_chunk(min_range, max_range, lines)
-        print(f"Lowest location for chunk: {lowest_loc}")
+        locations.append(process_seed_chunk(min_range, max_range, lines))
+        print(f"Lowest location for chunk: {locations}")
         seed_numbers.remove(seed)
-    return 0
+    return min(loc for loc in locations)
+
+
+#        MAIN
 
 def main() -> None:
     args: Args = parse_args()
@@ -87,8 +110,6 @@ def main() -> None:
         lines : list[str] = file.readlines();
     result: int = calculate_result_part_one(lines)
     print(f"Part 1 Result: {result}")
-
-    # TODO: FIX PART TWO
     result: int = calculate_result_part_two(lines)
     print(f"Part 2 Result: {result}")
     exit(0)
