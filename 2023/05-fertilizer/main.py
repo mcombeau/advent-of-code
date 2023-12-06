@@ -11,19 +11,9 @@ def parse_args() -> Args:
     args: Args = parser.parse_args()
     return args
 
-def get_seed_numbers(lines: list[str], partTwo: bool) -> list[int]:
+def get_seed_numbers(lines: list[str]) -> list[int]:
     seedStr: list[str] = lines[0].strip().split(":")[1].strip().split(" ")
-    if not partTwo:
-        return [int(i) for i in seedStr]
-    else:
-        # TODO: FIX THIS IT KILLS MY COMPUTER :(
-        seeds: list[int] = []
-        for i, seed in enumerate(seedStr):
-            min_range: int = int(seedStr[i])
-            max_range: int = min_range + int(seedStr[i + 1])
-            [seeds.append(s) for s in range(min_range, max_range)]
-            seedStr.remove(seed)
-        return seeds
+    return [int(i) for i in seedStr]
 
 def get_map(lines: list[str], title: str) -> list[tuple[int, int, int]]:
     save_next_lines: bool = False
@@ -48,8 +38,7 @@ def get_correspondance(source: int, map: list[tuple[int, int, int]]) -> int:
             return m[0] + offset
     return source
 
-def calculate_result(lines: list[str], partTwo: bool) -> int :
-    seeds: list[int] = get_seed_numbers(lines, partTwo)
+def get_lowest_seed_location(lines: list[str], seeds: list[int]) -> int:
     seed_soil_map: list[tuple[int, int, int]] = get_map(lines, "seed-to-soil")
     soil_fert_map: list[tuple[int, int, int]] = get_map(lines, "soil-to-fertilizer")
     fert_water_map: list[tuple[int, int, int]] = get_map(lines, "fertilizer-to-water")
@@ -70,18 +59,38 @@ def calculate_result(lines: list[str], partTwo: bool) -> int :
         locations.append(num)
     return min(loc for loc in locations)
 
+def calculate_result_part_one(lines: list[str]) -> int :
+    seeds: list[int] = get_seed_numbers(lines)
+    return get_lowest_seed_location(lines, seeds)
+
+# TODO: FIX THIS IT KILLS MY COMPUTER :(
+def process_seed_chunk(min_range, max_range, lines: list[str]) -> int:
+    seeds: list[int] = []
+    [seeds.append(s) for s in range(min_range, max_range)]
+    print(f"made seed list: {seeds}")
+    return get_lowest_seed_location(lines, seeds)
+
+def calculate_result_part_two(lines: list[str]) -> int:
+    seed_numbers: list[int] = get_seed_numbers(lines)
+    for i, seed in enumerate(seed_numbers):
+        min_range: int = seed
+        max_range: int = min_range + seed_numbers[i + 1]
+        lowest_loc: int = process_seed_chunk(min_range, max_range, lines)
+        print(f"Lowest location for chunk: {lowest_loc}")
+        seed_numbers.remove(seed)
+    return 0
 
 def main() -> None:
     args: Args = parse_args()
     lines: list[str] = []
     with open(args.filename) as file:
         lines : list[str] = file.readlines();
-    result: int = calculate_result(lines, partTwo=False)
+    result: int = calculate_result_part_one(lines)
     print(f"Part 1 Result: {result}")
 
     # TODO: FIX PART TWO
-    # result: int = calculate_result(lines, partTwo=True)
-    # print(f"Part 2 Result: {result}")
+    result: int = calculate_result_part_two(lines)
+    print(f"Part 2 Result: {result}")
     exit(0)
 
 if __name__ == "__main__":
