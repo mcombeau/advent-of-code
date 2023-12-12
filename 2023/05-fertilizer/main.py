@@ -99,6 +99,7 @@ def calculate_result_part_two(lines: list[str]) -> int:
     while True:
         lowest_location += 1
         seed_candidate = get_seed_from_location(lowest_location, maps)
+        print(f"Testing location: {lowest_location}", end="\r")
         for seed_range in seed_ranges:
             if seed_candidate in seed_range:
                 return lowest_location
@@ -118,9 +119,10 @@ def main() -> None:
     print(f"Part 1 Result: {result}")
     print("-" * 40, end="\n\n")
     print("PART TWO")
-    print("-" * 40, end="\n\n")
-    print(f"Processing...", end="\n\n")
+    print("-" * 40)
+    print(f"Processing...", end="\n")
     result: int = calculate_result_part_two(lines)
+    print()
     print("-" * 40)
     print(f"Part 2 Result: {result}")
     print("-" * 40)
