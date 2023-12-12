@@ -1,6 +1,5 @@
 import argparse
 import typing
-import re
 from enum import Enum
 
 Args = argparse.Namespace
@@ -17,13 +16,13 @@ def parse_args() -> Args:
 
 
 class HandType(Enum):
-    FIVE_OF_KIND = 7
-    FOUR_OF_KIND = 6
-    FULL_HOUSE = 5
+    FIVE_OF_KIND = 1
+    FOUR_OF_KIND = 2
+    FULL_HOUSE = 3
     THREE_OF_KIND = 4
-    TWO_PAIR = 3
-    ONE_PAIR = 2
-    HIGH_CARD = 1
+    TWO_PAIR = 5
+    ONE_PAIR = 6
+    HIGH_CARD = 7
     ERROR = 0
 
 
@@ -33,6 +32,7 @@ class Hand:
         self.cards = cards
         self.bid = bid
         self.hand_type = hand_type
+        self.rank = 0
 
 
 def get_card_numbers(cards: str) -> dict[str, int]:
@@ -46,7 +46,7 @@ def get_card_numbers(cards: str) -> dict[str, int]:
 
 
 def get_full_house_or_three_of_kind(card_numbers: dict[str, int]) -> HandType:
-    for card, number in card_numbers.items():
+    for number in card_numbers.values():
         if number == 2:
             return HandType.FULL_HOUSE
     return HandType.THREE_OF_KIND
@@ -54,7 +54,7 @@ def get_full_house_or_three_of_kind(card_numbers: dict[str, int]) -> HandType:
 
 def get_two_or_one_pair(card_numbers: dict[str, int]) -> HandType:
     num_pairs = 0
-    for card, number in card_numbers.items():
+    for number in card_numbers.values():
         if number == 2:
             num_pairs += 1
     if num_pairs == 2:
@@ -65,7 +65,7 @@ def get_two_or_one_pair(card_numbers: dict[str, int]) -> HandType:
 def get_hand_type(cards: str) -> HandType:
     card_numbers: dict[str, int] = get_card_numbers(cards)
     highest_number_of_same_cards: int = 0
-    for card, number in card_numbers.items():
+    for number in card_numbers.values():
         if number > highest_number_of_same_cards:
             highest_number_of_same_cards = number
 
@@ -97,10 +97,51 @@ def get_hands(lines: list[str]) -> list[Hand]:
 #       PART ONE
 
 
+def get_card_values() -> dict[str, int]:
+    valid_cards: str = "AKQJT98765432"
+    card_values: dict[str, int] = {}
+    for i, card in enumerate(valid_cards):
+        card_values[card] = len(valid_cards) - i - 1
+    print(f"Card values: {card_values}")
+    return card_values
+
+
+def should_switch_ranks(
+    card_values: dict[str, int], current_hand: Hand, hand: Hand
+) -> bool:
+    return False
+
+
+def assign_ranks(hands: list[Hand]) -> list[Hand]:
+    card_values: dict[str, int] = get_card_values()
+    sorted_hands: list[Hand] = sorted(
+        hands, key=lambda x: x.hand_type.value, reverse=True
+    )
+    for i, hand in enumerate(sorted_hands):
+        hand.rank = i + 1
+        print(
+            f"Hand: cards: {hand.cards}, bid: {hand.bid}, type: {hand.hand_type}, rank: {hand.rank}"
+        )
+    for i, current_hand in enumerate(sorted_hands):
+        for j, hand in enumerate(sorted_hands):
+            if i == j:
+                continue
+            if current_hand.hand_type != hand.hand_type:
+                continue
+            if should_switch_ranks(card_values, current_hand, hand):
+                tmp: int = current_hand.rank
+                current_hand.rank = hand.rank
+                hand.rank = current_hand.rank
+                i = 0
+                break
+
+            # determine if we need to switch ranks
+    return sorted_hands
+
+
 def calculate_result_part_1(lines: list[str]) -> int:
     hands: list[Hand] = get_hands(lines)
-    for hand in hands:
-        print(f"Hand: {hand.cards}, {hand.bid}, {hand.hand_type}")
+    ranked_hands: list[Hand] = assign_ranks(hands)
 
     return 0
 
