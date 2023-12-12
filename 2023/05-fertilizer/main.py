@@ -112,25 +112,18 @@ def main() -> None:
     lines: list[str] = []
     with open(args.filename) as file:
         lines: list[str] = file.readlines()
-    print()
     print("PART ONE")
     print("-" * 40)
-    print()
     result: int = calculate_result_part_one(lines)
-    print()
-    print("-" * 40)
     print(f"Part 1 Result: {result}")
-    print("-" * 40)
-    print()
+    print("-" * 40, end="\n\n")
     print("PART TWO")
-    print("-" * 40)
-    print()
+    print("-" * 40, end="\n\n")
+    print(f"Processing...", end="\n\n")
     result: int = calculate_result_part_two(lines)
-    print()
     print("-" * 40)
     print(f"Part 2 Result: {result}")
     print("-" * 40)
-    print()
     exit(0)
 
 
