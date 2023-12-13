@@ -45,67 +45,15 @@ def get_card_numbers(cards: str) -> dict[str, int]:
     return card_numbers
 
 
-def get_full_house_or_three_of_kind(
-    card_numbers: dict[str, int], isPart2: bool
-) -> HandType:
-    num_jokers = card_numbers["J"]
-
-    if not isPart2 and num_jokers == 2:
-        return HandType.FULL_HOUSE
-
-    for card, number in card_numbers.items():
-        if isPart2 and number + num_jokers == 2:
-            return HandType.FULL_HOUSE
-        if not card == "J" and number == 2:
-            return HandType.FULL_HOUSE
-    return HandType.THREE_OF_KIND
-
-
-def get_two_or_one_pair(card_numbers: dict[str, int], isPart2) -> HandType:
-    num_pairs = 0
-    num_jokers = card_numbers["J"]
-
-    for card, number in card_numbers.items():
-        if not card == "J" and number == 2:
-            num_pairs += 1
-
-    if isPart2 and num_pairs == 1 and num_jokers >= 1:
-        return HandType.TWO_PAIR
-    if num_pairs + num_jokers == 2:
-        return HandType.TWO_PAIR
-    return HandType.ONE_PAIR
-
-
-def get_hand_type(cards: str, isPart2: bool) -> HandType:
-    card_numbers: dict[str, int] = get_card_numbers(cards)
-    highest_number_of_same_cards: int = 0
-    for number in card_numbers.values():
-        if number > highest_number_of_same_cards:
-            highest_number_of_same_cards = number
-
-    if isPart2:
-        highest_number_of_same_cards += card_numbers["J"]
-
-    match highest_number_of_same_cards:
-        case 5:
-            return HandType.FIVE_OF_KIND
-        case 4:
-            return HandType.FOUR_OF_KIND
-        case 1:
-            return HandType.HIGH_CARD
-        case 3:
-            return get_full_house_or_three_of_kind(card_numbers, isPart2)
-        case 2:
-            return get_two_or_one_pair(card_numbers, isPart2)
-    return HandType.ERROR
-
-
 def get_hands(lines: list[str], isPart2: bool) -> list[Hand]:
     hands: list[Hand] = []
     for line in lines:
         cards: str = line.split(" ")[0]
         bid: int = int(line.split(" ")[-1])
-        hand_type: HandType = get_hand_type(cards, isPart2)
+        if isPart2:
+            hand_type: HandType = get_hand_type_part2(cards)
+        else:
+            hand_type: HandType = get_hand_type(cards)
         hands.append(Hand(cards, bid, hand_type))
 
     return hands
@@ -125,6 +73,46 @@ def assign_ranks(hands: list[Hand]) -> list[Hand]:
         hand.rank = i + 1
 
     return sorted_hands_by_type
+
+
+def get_full_house_or_three_of_kind(card_numbers: dict[str, int]) -> HandType:
+    for number in card_numbers.values():
+        if number == 2:
+            return HandType.FULL_HOUSE
+    return HandType.THREE_OF_KIND
+
+
+def get_two_or_one_pair(card_numbers: dict[str, int]) -> HandType:
+    num_pairs = 0
+
+    for number in card_numbers.values():
+        if number == 2:
+            num_pairs += 1
+
+    if num_pairs == 2:
+        return HandType.TWO_PAIR
+    return HandType.ONE_PAIR
+
+
+def get_hand_type(cards: str) -> HandType:
+    card_numbers: dict[str, int] = get_card_numbers(cards)
+    highest_number_of_same_cards: int = 0
+    for number in card_numbers.values():
+        if number > highest_number_of_same_cards:
+            highest_number_of_same_cards = number
+
+    match highest_number_of_same_cards:
+        case 5:
+            return HandType.FIVE_OF_KIND
+        case 4:
+            return HandType.FOUR_OF_KIND
+        case 1:
+            return HandType.HIGH_CARD
+        case 3:
+            return get_full_house_or_three_of_kind(card_numbers)
+        case 2:
+            return get_two_or_one_pair(card_numbers)
+    return HandType.ERROR
 
 
 def calculate_result_part_1(lines: list[str]) -> int:
@@ -148,6 +136,73 @@ def calculate_result_part_1(lines: list[str]) -> int:
 
 #       PART TWO
 
+# Full house: 23332, where three cards have the same label, and the remaining two cards share a different label:
+# Three of a kind: TTT98, where three cards have the same label, and the remaining two cards are each different from any other card in the hand:
+
+# 2J233 -> Labeled THREE OF KIND when it is FULL HOUSE
+
+# 12767 -> Labeled FULL HOUSE when is THREE OF KIND
+
+
+def get_full_house_or_three_of_kind_part2(card_numbers: dict[str, int]) -> HandType:
+    nb_jokers = card_numbers["J"]
+
+    if nb_jokers == 0:
+        # default to part 1 if no jokers
+        return get_full_house_or_three_of_kind(card_numbers)
+
+    highest_number = 0
+    nb_pairs = 0
+    for card, number in card_numbers.items():
+        if not card == "J":
+            if number == 2:
+                nb_pairs += 1
+            if number > highest_number:
+                highest_number = number
+
+    if highest_number == 2 and nb_pairs == 2 and nb_jokers >= 1:
+        return HandType.FULL_HOUSE
+
+    return HandType.THREE_OF_KIND
+
+
+def get_two_or_one_pair_part2(card_numbers: dict[str, int]) -> HandType:
+    nb_jokers = card_numbers["J"]
+
+    if nb_jokers == 0:
+        # default to part 1 if no jokers
+        return get_two_or_one_pair(card_numbers)
+
+    return HandType.ONE_PAIR
+
+
+def get_hand_type_part2(cards: str) -> HandType:
+    card_numbers: dict[str, int] = get_card_numbers(cards)
+    nb_jokers = card_numbers["J"]
+    highest_number_of_same_cards: int = 0
+
+    for card, number in card_numbers.items():
+        if not card == "J" and number > highest_number_of_same_cards:
+            highest_number_of_same_cards = number
+
+    if highest_number_of_same_cards == 0 and nb_jokers == 5:
+        return HandType.FIVE_OF_KIND
+
+    highest_number_of_same_cards += nb_jokers
+
+    match highest_number_of_same_cards:
+        case 5:
+            return HandType.FIVE_OF_KIND
+        case 4:
+            return HandType.FOUR_OF_KIND
+        case 1:
+            return HandType.HIGH_CARD
+        case 3:
+            return get_full_house_or_three_of_kind_part2(card_numbers)
+        case 2:
+            return get_two_or_one_pair_part2(card_numbers)
+    return HandType.ERROR
+
 
 def calculate_result_part_2(lines: list[str]) -> int:
     hands: list[Hand] = get_hands(lines, isPart2=True)
@@ -164,11 +219,11 @@ def calculate_result_part_2(lines: list[str]) -> int:
     ranked_hands: list[Hand] = assign_ranks(hands)
     result = 0
 
-    # print("-" * 20)
+    print("-" * 20)
     for hand in ranked_hands:
-        # print(
-        #     f"Hand: cards: {hand.cards}, type: {hand.hand_type}, bid: {hand.bid}, rank: {hand.rank}"
-        # )
+        print(
+            f"Hand: cards: {hand.cards}, type: {hand.hand_type}, bid: {hand.bid}, rank: {hand.rank}"
+        )
         result += hand.bid * hand.rank
     return result
 
