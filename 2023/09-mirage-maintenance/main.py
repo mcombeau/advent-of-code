@@ -25,21 +25,22 @@ def get_historical_values(lines: list[str]) -> History:
     return history
 
 
-def does_list_contain_all_zeros(list_of_numbers: list[int]) -> bool:
-    return all(n == 0 for n in list_of_numbers)
-
-
-def get_difference(list_of_numbers: list[int]) -> list[int]:
-    return list(numpy.diff(list_of_numbers))
-
-
-def get_prediction(history: list[int]) -> int:
+def extrapolate_differences(history: list[int]) -> Differences:
     differences: Differences = [history]
 
     i = 0
-    while not does_list_contain_all_zeros(differences[i]):
-        differences.append(get_difference(differences[i]))
+    while not all(n == 0 for n in differences[i]):
+        differences.append(list(numpy.diff(differences[i])))
         i += 1
+
+    return differences
+
+
+#       PART ONE
+
+
+def get_future_prediction(history: list[int]) -> int:
+    differences: Differences = extrapolate_differences(history)
 
     for i in range(len(differences) - 1, 0, -1):
         if i == len(differences) - 1:
@@ -50,15 +51,12 @@ def get_prediction(history: list[int]) -> int:
     return differences[0][-1]
 
 
-#       PART ONE
-
-
 def calculate_result_part_1(lines: list[str]) -> int:
     history: History = get_historical_values(lines)
     results: list[int] = []
 
     for hist in history:
-        results.append(get_prediction(hist))
+        results.append(get_future_prediction(hist))
 
     return sum(results)
 
@@ -66,8 +64,26 @@ def calculate_result_part_1(lines: list[str]) -> int:
 #       PART TWO
 
 
+def get_past_prediction(history: list[int]) -> int:
+    differences: Differences = extrapolate_differences(history)
+
+    for i in range(len(differences) - 1, 0, -1):
+        if i == len(differences) - 1:
+            differences[i].insert(0, 0)
+        else:
+            differences[i - 1].insert(0, differences[i - 1][0] - differences[i][0])
+
+    return differences[0][0]
+
+
 def calculate_result_part_2(lines: list[str]) -> int:
-    return 0
+    history: History = get_historical_values(lines)
+    results: list[int] = []
+
+    for hist in history:
+        results.append(get_past_prediction(hist))
+
+    return sum(results)
 
 
 #       MAIN
