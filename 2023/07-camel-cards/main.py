@@ -97,53 +97,34 @@ def get_hands(lines: list[str]) -> list[Hand]:
 #       PART ONE
 
 
-def get_card_values() -> dict[str, int]:
-    valid_cards: str = "AKQJT98765432"
-    card_values: dict[str, int] = {}
-    for i, card in enumerate(valid_cards):
-        card_values[card] = len(valid_cards) - i - 1
-    print(f"Card values: {card_values}")
-    return card_values
-
-
-def should_switch_ranks(
-    card_values: dict[str, int], current_hand: Hand, hand: Hand
-) -> bool:
-    return False
-
-
 def assign_ranks(hands: list[Hand]) -> list[Hand]:
-    card_values: dict[str, int] = get_card_values()
-    sorted_hands: list[Hand] = sorted(
-        hands, key=lambda x: x.hand_type.value, reverse=True
-    )
-    for i, hand in enumerate(sorted_hands):
-        hand.rank = i + 1
-        print(
-            f"Hand: cards: {hand.cards}, bid: {hand.bid}, type: {hand.hand_type}, rank: {hand.rank}"
+    for hand in hands:
+        hand.cards = (
+            hand.cards.replace("A", "Z")
+            .replace("K", "Y")
+            .replace("Q", "X")
+            .replace("J", "W")
+            .replace("T", "V")
         )
-    for i, current_hand in enumerate(sorted_hands):
-        for j, hand in enumerate(sorted_hands):
-            if i == j:
-                continue
-            if current_hand.hand_type != hand.hand_type:
-                continue
-            if should_switch_ranks(card_values, current_hand, hand):
-                tmp: int = current_hand.rank
-                current_hand.rank = hand.rank
-                hand.rank = current_hand.rank
-                i = 0
-                break
+    sorted_hands_by_cards: list[Hand] = sorted(hands, key=lambda x: x.cards)
+    sorted_hands_by_type: list[Hand] = sorted(
+        sorted_hands_by_cards, key=lambda x: x.hand_type.value, reverse=True
+    )
+    for i, hand in enumerate(sorted_hands_by_type):
+        hand.rank = i + 1
 
-            # determine if we need to switch ranks
-    return sorted_hands
+    return sorted_hands_by_type
 
 
 def calculate_result_part_1(lines: list[str]) -> int:
     hands: list[Hand] = get_hands(lines)
     ranked_hands: list[Hand] = assign_ranks(hands)
+    result = 0
 
-    return 0
+    for hand in ranked_hands:
+        result += hand.bid * hand.rank
+
+    return result
 
 
 #       PART TWO
