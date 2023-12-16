@@ -1,4 +1,5 @@
 import argparse
+from enum import IntEnum
 
 Args = argparse.Namespace
 Parser = argparse.ArgumentParser
@@ -13,102 +14,116 @@ def parse_args() -> Args:
     return args
 
 
+class Dir(IntEnum):
+    EAST = 0
+    SOUTH = 1
+    WEST = 2
+    NORTH = 3
+    ERROR = -1
+
+
+class Direction:
+    def __init__(self, dir, pos, valid_tiles):
+        self.dir: Dir = dir
+        self.pos: tuple[int, int] = pos
+        self.valid_tiles: str = valid_tiles
+
+
 #       PART ONE
 
 
-class Position:
-    def __init__(self, y, x):
-        self.y: int = y
-        self.x: int = x
-
-    def __eq__(self, other):
-        if not isinstance(other, Position):
-            return NotImplemented
-        return self.y == other.y and self.x == other.x
-
-
-def find_animal_pos(map: Map) -> Position:
-    pos: Position = Position(-1, -1)
-
-    for y, row in enumerate(map):
-        for x, col in enumerate(row):
-            if map[y][x] == "S":
-                pos = Position(y, x)
-
-    return pos
-
-
-def find_starting_pos(map: Map, pos: Position) -> Position:
-    north: Position = Position(pos.y - 1, pos.x)
-    east: Position = Position(pos.y, pos.x + 1)
-    south: Position = Position(pos.y + 1, pos.x)
-    west: Position = Position(pos.y, pos.x - 1)
-
-    if is_loop_tile(map, north, "|7F"):
-        return north
-    if is_loop_tile(map, east, "-J7"):
-        return east
-    if is_loop_tile(map, south, "|LJ"):
-        return south
-    if is_loop_tile(map, west, "-LF"):
-        return west
-
-    return Position(-1, -1)
+def get_future_direction(current_dir: Dir, tile: str) -> Dir:
+    match current_dir:
+        case Dir.EAST:
+            if tile == "-":
+                return Dir.EAST
+            elif tile == "7":
+                return Dir.SOUTH
+            elif tile == "J":
+                return Dir.NORTH
+        case Dir.SOUTH:
+            if tile == "|":
+                return Dir.SOUTH
+            elif tile == "L":
+                return Dir.EAST
+            elif tile == "J":
+                return Dir.WEST
+        case Dir.WEST:
+            if tile == "-":
+                return Dir.WEST
+            elif tile == "F":
+                return Dir.SOUTH
+            elif tile == "L":
+                return Dir.NORTH
+        case Dir.NORTH:
+            if tile == "|":
+                return Dir.NORTH
+            elif tile == "F":
+                return Dir.EAST
+            elif tile == "7":
+                return Dir.WEST
+    return Dir.ERROR
 
 
-def is_loop_tile(map: Map, pos: Position, valid_tiles: str) -> bool:
-    if pos.x < 0 or pos.x > len(map[0]) or pos.y < 0 or pos.y > len(map):
-        return False
+def get_starting_dirs(dirs: list[Direction], map: Map, ay: int, ax: int) -> list[Dir]:
+    starting_dirs: list[Dir] = []
 
-    if map[pos.y][pos.x] in valid_tiles:
-        return True
+    for i in range(len(dirs)):
+        by = ay + dirs[i].pos[0]
+        bx = ax + dirs[i].pos[1]
+        if (
+            by >= 0
+            and by <= len(map)
+            and bx >= 0
+            and bx <= len(map[0])
+            and map[by][bx] in dirs[i].valid_tiles
+        ):
+            starting_dirs.append(dirs[i].dir)
 
-    return False
+    return starting_dirs
 
 
-def get_next_pos(map: Map, pos: Position, visited_tiles: list[Position]) -> Position:
-    north: Position = Position(pos.y - 1, pos.x)
-    east: Position = Position(pos.y, pos.x + 1)
-    south: Position = Position(pos.y + 1, pos.x)
-    west: Position = Position(pos.y, pos.x - 1)
+def get_starting_coordinates(map: Map) -> tuple[int, int]:
+    ay, ax = -1, -1
 
-    match map[pos.y][pos.x]:
-        case "L":
-            return east if north in visited_tiles else north
-        case "J":
-            return west if north in visited_tiles else north
-        case "F":
-            return south if east in visited_tiles else east
-        case "7":
-            return south if west in visited_tiles else west
-        case "-":
-            return east if west in visited_tiles else west
-        case "|":
-            return south if north in visited_tiles else north
+    for y in range(len(map)):
+        if "S" in map[y]:
+            ay = y
+            ax = map[y].find("S")
 
-    return Position(-1, -1)
+    return ay, ax
+
+
+def init_directions() -> list[Direction]:
+    dirs: list[Direction] = []
+
+    dirs.append(Direction(Dir.EAST, (0, 1), "-7J"))
+    dirs.append(Direction(Dir.SOUTH, (1, 0), "|LJ"))
+    dirs.append(Direction(Dir.WEST, (0, -1), "-FL"))
+    dirs.append(Direction(Dir.NORTH, (-1, 0), "|F7"))
+
+    return dirs
 
 
 def calculate_result_part_1(map: Map) -> int:
+    dirs: list[Direction] = init_directions()
+
+    ay: int
+    ax: int
+    ay, ax = get_starting_coordinates(map)
+
+    current_dir: Dir = get_starting_dirs(dirs, map, ay, ax)[0]
+
+    y: int = ay + dirs[current_dir].pos[0]
+    x: int = ax + dirs[current_dir].pos[1]
     steps: int = 1
-    starting_pos: Position = find_animal_pos(map)
-    visited_tiles: list[Position] = [starting_pos]
-    pos: Position = find_starting_pos(map, visited_tiles[0])
 
-    print(f"Current pos: map[{pos.y}][{pos.x}]: {map[pos.y][pos.x]}", end="\r")
-
-    while map[pos.y][pos.x] != "S":
-        visited_tiles.append(pos)
-        pos = get_next_pos(map, pos, visited_tiles)
-
-        print(end="\x1b[2K")
-        print(f"Current pos: map[{pos.y}][{pos.x}]: {map[pos.y][pos.x]}", end="\r")
-
-        if steps == 1:
-            visited_tiles.pop(0)
+    while (y, x) != (ay, ax):
+        current_dir: Dir = get_future_direction(current_dir, map[y][x])
+        y = y + dirs[current_dir].pos[0]
+        x = x + dirs[current_dir].pos[1]
         steps += 1
 
-    print()
     return int(steps / 2)
 
 
