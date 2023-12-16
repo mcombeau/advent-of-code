@@ -4,6 +4,7 @@ from enum import IntEnum
 Args = argparse.Namespace
 Parser = argparse.ArgumentParser
 Map = list[str]
+Mask = list[list[int]]
 
 
 def parse_args() -> Args:
@@ -27,9 +28,6 @@ class Direction:
         self.dir: Dir = dir
         self.pos: tuple[int, int] = pos
         self.valid_tiles: str = valid_tiles
-
-
-#       PART ONE
 
 
 def get_future_direction(current_dir: Dir, tile: str) -> Dir:
@@ -105,6 +103,9 @@ def init_directions() -> list[Direction]:
     return dirs
 
 
+#       PART ONE
+
+
 def calculate_result_part_1(map: Map) -> int:
     dirs: list[Direction] = init_directions()
 
@@ -130,8 +131,42 @@ def calculate_result_part_1(map: Map) -> int:
 #       PART TWO
 
 
+def count_enclosed_tiles(map: Map, mask: Mask, start_valid: bool) -> int:
+    count: int = 0
+
+    for y in range(len(map)):
+        enclosed: bool = False
+
+        for x in range(len(map[0])):
+            if mask[y][x] == 1:
+                if map[y][x] in "|JL" or (map[y][x] == "S" and start_valid):
+                    enclosed = not enclosed
+            else:
+                count += enclosed
+
+    return count
+
+
 def calculate_result_part_2(map: Map) -> int:
-    return 0
+    mask: Mask = [[0] * len(map[0]) for _ in range(len(map))]
+    dirs: list[Direction] = init_directions()
+    ay, ax = get_starting_coordinates(map)
+    starting_dirs: list[Dir] = get_starting_dirs(dirs, map, ay, ax)
+    current_dir: Dir = starting_dirs[0]
+    start_valid = Dir.NORTH in starting_dirs
+
+    mask[ay][ax] = 1
+
+    y: int = ay + dirs[current_dir].pos[0]
+    x: int = ax + dirs[current_dir].pos[1]
+
+    while (y, x) != (ay, ax):
+        mask[y][x] = 1
+        current_dir: Dir = get_future_direction(current_dir, map[y][x])
+        y = y + dirs[current_dir].pos[0]
+        x = x + dirs[current_dir].pos[1]
+
+    return count_enclosed_tiles(map, mask, start_valid)
 
 
 #       MAIN
