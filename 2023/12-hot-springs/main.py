@@ -78,7 +78,7 @@ def calculate_result_part_2(lines: list[str]) -> int:
         count: int = 0
 
         record, groups = line.split()
-        record = gear.UNKNOWN.value.join([record] * 5)
+        record = gear.UNKNOWN.join([record] * 5)
 
         groups = tuple(map(int, groups.split(",")))
         groups *= 5
