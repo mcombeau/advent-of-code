@@ -13,37 +13,73 @@ def parse_args() -> Args:
     return args
 
 
+def roll_rocks_left(grid: Grid) -> Grid:
+    tilted_grid: Grid = []
+    for row in grid:
+        rolled_rocks: list[str] = []
+
+        for group in row.split("#"):
+            rolled: str = "".join(sorted(list(group), reverse=True))
+            rolled_rocks.append(rolled)
+
+        rolled_row = "#".join(rolled_rocks)
+        tilted_grid.append(rolled_row)
+
+    return tilted_grid
+
+
+def calculate_load(grid: Grid) -> int:
+    result: int = 0
+
+    for i, row in enumerate(grid):
+        rock_count = row.count("O")
+        result += rock_count * (len(grid) - i)
+
+    return result
+
+
 #       PART ONE
 
 
 def calculate_result_part_1(lines: list[str]) -> int:
     grid: Grid = [line.strip() for line in lines]
-    rotated_grid = list(map("".join, zip(*grid)))
+    rotated_grid: Grid = list(map("".join, zip(*grid)))
+    tilted_grid: Grid = roll_rocks_left(rotated_grid)
+    grid = list(map("".join, zip(*tilted_grid)))
 
-    tilted_grid = []
-    for row in rotated_grid:
-        rolled_rocks = []
-        for group in row.split("#"):
-            rolled = "".join(sorted(list(group), reverse=True))
-            rolled_rocks.append(rolled)
-        rolled_row = "#".join(rolled_rocks)
-        tilted_grid.append(rolled_row)
-
-    final_grid = list(map("".join, zip(*tilted_grid)))
-
-    result: int = 0
-    for i, row in enumerate(final_grid):
-        rock_count = row.count("O")
-        result += rock_count * (len(final_grid) - i)
-
-    return result
+    return calculate_load(grid)
 
 
 #       PART TWO
 
 
+def cycle(grid: tuple[str, ...]) -> tuple[str, ...]:
+    for _ in range(4):
+        rotated_grid: Grid = list(map("".join, zip(*grid)))
+        tilted_grid: Grid = roll_rocks_left(rotated_grid)
+        grid = tuple(row[::-1] for row in tilted_grid)
+    return grid
+
+
 def calculate_result_part_2(lines: list[str]) -> int:
-    return 0
+    grid: tuple[str, ...] = tuple(line.strip() for line in lines)
+    seen_grid_states: set = {grid}
+    seen_grids: list[tuple[str, ...]] = [grid]
+    i: int = 0
+
+    while True:
+        i += 1
+        grid = cycle(grid)
+        if grid in seen_grid_states:
+            break
+        seen_grids.append(grid)
+        seen_grid_states.add(grid)
+
+    offset = seen_grids.index(grid)
+
+    grid: tuple[str, ...] = seen_grids[(1000000000 - offset) % (i - offset) + offset]
+
+    return calculate_load(list(grid))
 
 
 #       MAIN
