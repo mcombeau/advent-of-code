@@ -63,17 +63,17 @@ def cycle(grid: tuple[str, ...]) -> tuple[str, ...]:
 
 def calculate_result_part_2(lines: list[str]) -> int:
     grid: tuple[str, ...] = tuple(line.strip() for line in lines)
-    seen_grid_states: set = {grid}
+    seen_grid_hashes: set = {grid}
     seen_grids: list[tuple[str, ...]] = [grid]
     i: int = 0
 
     while True:
         i += 1
         grid = cycle(grid)
-        if grid in seen_grid_states:
+        if grid in seen_grid_hashes:
             break
         seen_grids.append(grid)
-        seen_grid_states.add(grid)
+        seen_grid_hashes.add(grid)
 
     offset = seen_grids.index(grid)
 
