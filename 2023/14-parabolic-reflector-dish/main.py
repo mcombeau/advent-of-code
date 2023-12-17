@@ -2,7 +2,7 @@ import argparse
 
 Args = argparse.Namespace
 Parser = argparse.ArgumentParser
-Map = list[str]
+Grid = list[str]
 
 
 def parse_args() -> Args:
@@ -17,7 +17,24 @@ def parse_args() -> Args:
 
 
 def calculate_result_part_1(lines: list[str]) -> int:
+    grid: Grid = [line.strip() for line in lines]
+    rotated_grid = list(map("".join, zip(*grid)))
+
+    tilted_grid = []
+    for row in rotated_grid:
+        rolled_rocks = []
+        for group in row.split("#"):
+            rolled = "".join(sorted(list(group), reverse=True))
+            rolled_rocks.append(rolled)
+        rolled_row = "#".join(rolled_rocks)
+        tilted_grid.append(rolled_row)
+
+    final_grid = list(map("".join, zip(*tilted_grid)))
+
     result: int = 0
+    for i, row in enumerate(final_grid):
+        rock_count = row.count("O")
+        result += rock_count * (len(final_grid) - i)
 
     return result
 
@@ -26,8 +43,7 @@ def calculate_result_part_1(lines: list[str]) -> int:
 
 
 def calculate_result_part_2(lines: list[str]) -> int:
-    result: int = 0
-    return result
+    return 0
 
 
 #       MAIN
