@@ -1,5 +1,6 @@
 import argparse
 from functools import cache
+from enum import StrEnum
 
 Args = argparse.Namespace
 Parser = argparse.ArgumentParser
@@ -13,6 +14,12 @@ def parse_args() -> Args:
     return args
 
 
+class gear(StrEnum):
+    OPERATIONAL = "."
+    DAMAGED = "#"
+    UNKNOWN = "?"
+
+
 #       PART ONE
 
 
@@ -20,32 +27,28 @@ def is_valid_group(record: str, group: int) -> bool:
     if group > len(record):
         return False
 
-    contains_no_operational_gear = "." not in record[:group]
-    not_followed_by_damaged_gear = group == len(record) or record[group] != "#"
-
-    return (
-        True if contains_no_operational_gear and not_followed_by_damaged_gear else False
+    return gear.OPERATIONAL not in record[:group] and (
+        group == len(record) or record[group] != gear.DAMAGED
     )
 
 
 @cache
 def get_number_arrangements(record: str, groups: tuple[int, ...]) -> int:
-    if record == "":
-        return 1 if groups == () else 0
-
-    if groups == ():
-        return 1 if not "#" in record else 0
-
     result: int = 0
 
-    if record[0] in ".?":
+    if record == "" or groups == ():
+        result = (
+            1 if groups == () and (record == "" or not gear.DAMAGED in record) else 0
+        )
+        return result
+
+    if record[0] == gear.OPERATIONAL or record[0] == gear.UNKNOWN:
         result += get_number_arrangements(record[1:], groups)
 
-    if record[0] in "#?":
-        if is_valid_group(record, groups[0]):
-            result += get_number_arrangements(record[groups[0] + 1 :], groups[1:])
-        else:
-            result += 0
+    if (record[0] == gear.DAMAGED or record[0] == gear.UNKNOWN) and is_valid_group(
+        record, groups[0]
+    ):
+        result += get_number_arrangements(record[groups[0] + 1 :], groups[1:])
 
     return result
 
@@ -75,7 +78,7 @@ def calculate_result_part_2(lines: list[str]) -> int:
         count: int = 0
 
         record, groups = line.split()
-        record = "?".join([record] * 5)
+        record = gear.UNKNOWN.value.join([record] * 5)
 
         groups = tuple(map(int, groups.split(",")))
         groups *= 5
