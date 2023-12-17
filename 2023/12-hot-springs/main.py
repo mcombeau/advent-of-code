@@ -69,7 +69,21 @@ def calculate_result_part_1(lines: list[str]) -> int:
 
 
 def calculate_result_part_2(lines: list[str]) -> int:
-    return 0
+    total_arrangements: int = 0
+
+    for line in lines:
+        count: int = 0
+
+        record, groups = line.split()
+        record = "?".join([record] * 5)
+
+        groups = tuple(map(int, groups.split(",")))
+        groups *= 5
+
+        count += get_number_arrangements(record, groups)
+        total_arrangements += count
+
+    return total_arrangements
 
 
 #       MAIN
