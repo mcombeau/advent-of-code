@@ -57,13 +57,15 @@ def get_mirror(map: Map, isPart2: bool = False) -> int:
 
 def calculate_result_part_1(lines: list[str]) -> int:
     maps: list[Map] = get_maps(lines)
-    result: list[int] = []
+    result: int = 0
 
     for map in maps:
         transposed_map = list(zip(*map))
-        result.append(get_mirror(map) * 100 + get_mirror(transposed_map))
+        mirror_rows: int = get_mirror(map) * 100
+        mirror_cols: int = get_mirror(transposed_map)
+        result += mirror_rows + mirror_cols
 
-    return sum(result)
+    return result
 
 
 #       PART TWO
@@ -82,16 +84,15 @@ def count_differences(upper: Map, lower: Map) -> int:
 
 def calculate_result_part_2(lines: list[str]) -> int:
     maps: list[Map] = get_maps(lines)
-    result: list[int] = []
+    result: int = 0
 
     for map in maps:
         transposed_map = list(zip(*map))
-        result.append(
-            get_mirror(map, isPart2=True) * 100
-            + get_mirror(transposed_map, isPart2=True)
-        )
+        mirror_rows: int = get_mirror(map, isPart2=True) * 100
+        mirror_cols: int = get_mirror(transposed_map, isPart2=True)
+        result += mirror_rows + mirror_cols
 
-    return sum(result)
+    return result
 
 
 #       MAIN
